@@ -3,49 +3,55 @@ const app = express();
 const Usuario = require('../models/usuario');
 const bcrypt = require('bcrypt');
 const _ = require('underscore');
+//este require llama a los middleware que definamos
+//basicamente este que definimos es para validar el toquen
+const { verificaToken, verificaAdminRol } = require('../middleware/autenticacion')
 
-app.get('/usuario', function(req, res) {
-    /*La funcion find de mongoose, se utiliza para buscar en BD es como un select de SQL
-      se pueden agregar varios parametros, al final para enviar a ejecutar se hace con .exec()
-      que es un callback que recibe un err y el obj a devolver
-      .skip funciona para saltar registros osea paginar*/
 
-    let desde = req.query.desde || 0;
-    desde = Number(desde);
+//el segundo parametro es el middleware que definimos para validar el token
+app.get('/usuario', verificaToken, (req, res) => {
+        /*La funcion find de mongoose, se utiliza para buscar en BD es como un select de SQL
+          se pueden agregar varios parametros, al final para enviar a ejecutar se hace con .exec()
+          que es un callback que recibe un err y el obj a devolver
+          .skip funciona para saltar registros osea paginar*/
 
-    let limite = req.query.limite || 5;
-    limite = Number(limite);
-    /* despues del primer parametro "{}" podemos enviar los campos que queremos recibir
-       como un select de SQL
-       en el parametro {} enviamos las condiciones por asi decirlo el where en sql*/
-    Usuario.find({ estado: true }, 'nombre email role estado google img')
-        .skip(desde)
-        .limit(limite)
-        .exec((err, usuarios) => {
-            if (err) {
-                return res.status(400).json({
-                    ok: false,
-                    err
-                });
-            }
-            /*se ejemplifica el uso de la funcion count, sirve para devolver o saber cuantos registros me 
-              esta retornando mi consulta a BD, puede contar de forma general enviando el primer parametro vacio {}
-              o bien especificanto condiciones*/
-            Usuario.count({ estado: true }, (err, conteo) => {
+        let desde = req.query.desde || 0;
+        desde = Number(desde);
 
-                res.json({
-                    ok: true,
-                    usuarios,
-                    cuantos: conteo
+        let limite = req.query.limite || 5;
+        limite = Number(limite);
+        /* despues del primer parametro "{}" podemos enviar los campos que queremos recibir
+           como un select de SQL
+           en el parametro {} enviamos las condiciones por asi decirlo el where en sql*/
+        Usuario.find({ estado: true }, 'nombre email role estado google img')
+            .skip(desde)
+            .limit(limite)
+            .exec((err, usuarios) => {
+                if (err) {
+                    return res.status(400).json({
+                        ok: false,
+                        err
+                    });
+                }
+                /*se ejemplifica el uso de la funcion count, sirve para devolver o saber cuantos registros me 
+                  esta retornando mi consulta a BD, puede contar de forma general enviando el primer parametro vacio {}
+                  o bien especificanto condiciones*/
+                Usuario.count({ estado: true }, (err, conteo) => {
 
+                    res.json({
+                        ok: true,
+                        usuarios,
+                        cuantos: conteo
+
+                    })
                 })
             })
-        })
 
 
-})
-
-app.post('/usuario', function(req, res) {
+    })
+    //al colocal [] en los middleware puedo enviar los middleware que requiera
+    //como en este caso que estoy enviando otro para validar primero el token despues del rol
+app.post('/usuario', [verificaToken, verificaAdminRol], function(req, res) {
 
     let body = req.body;
     let usuario = new Usuario({
@@ -76,7 +82,7 @@ app.post('/usuario', function(req, res) {
 
 })
 
-app.put('/usuario/:id', function(req, res) {
+app.put('/usuario/:id', [verificaToken, verificaAdminRol], function(req, res) {
     let id = req.params.id;
     /*La funcion pick de require('underscore') unicamente me devuelve las propiedades que deseo envia a actualizar
      */
@@ -100,7 +106,7 @@ app.put('/usuario/:id', function(req, res) {
     });
 })
 
-app.delete('/usuario/:id', function(req, res) {
+app.delete('/usuario/:id', [verificaToken, verificaAdminRol], function(req, res) {
 
     let id = req.params.id;
     /*con el siguiente codigo se elimina un registro de base datos*/
@@ -127,7 +133,7 @@ app.delete('/usuario/:id', function(req, res) {
 });
 
 
-app.delete('/usuarioDeleteLogico/:id', function(req, res) {
+app.delete('/usuarioDeleteLogico/:id', [verificaToken, verificaAdminRol], function(req, res) {
 
     let id = req.params.id;
     /*declaro un obj con las propiedades que quiero enviar a modificar a BD

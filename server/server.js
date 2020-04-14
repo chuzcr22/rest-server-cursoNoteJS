@@ -11,11 +11,8 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json())
 
-//traemos las rutas del controlador de usuarios
-app.use(require('./routes/usuario'));
-
-
-
+//traemos las rutas del controlador index dentro de routes
+app.use(require('./routes/index'));
 
 
 /*conexion a la base de dato, el primer paramtro "process.env.URLDB = urlBD" lo hemos definido
