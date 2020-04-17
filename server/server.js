@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
 const bodyParser = require('body-parser');
+const path = require('path');
+
 require('./config/config');
 
 
@@ -14,6 +16,9 @@ app.use(bodyParser.json())
 //traemos las rutas del controlador index dentro de routes
 app.use(require('./routes/index'));
 
+
+//habilitar el public para que se pueda acceder
+app.use(express.static(path.resolve(__dirname, '../public')));
 
 /*conexion a la base de dato, el primer paramtro "process.env.URLDB = urlBD" lo hemos definido
   en el archivo config.js, este parametro indica el entorno en el cual estamos trabajando*/
